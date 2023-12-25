@@ -57,6 +57,13 @@ const query = {email:email}
             console.log(result)
       res.send(result);
     })
+    app.delete('/api/v1/users/bookings/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await bookingCollection.deleteOne(query);
+      console.log(result)
+      res.send(result);
+    })
    
 
 
