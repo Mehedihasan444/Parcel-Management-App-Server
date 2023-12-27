@@ -92,8 +92,11 @@ async function run() {
       res.send(result);
     });
     app.get("/api/v1/users/admin", async (req, res) => {
-      const result = await userCollection.find().toArray();
+     
+         const result = await userCollection.find().toArray();
       res.send(result);
+  
+     
     });
     app.get("/api/v1/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -101,20 +104,15 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result);
     });
+    app.post("/api/v1/users/reviews", async (req, res) => {
+      const user = req.body;
+      const result = await reviewCollection.insertOne(user);
+      res.send(result);
+    });
     app.patch("/api/v1/users/:email", async (req, res) => {
       const email = req.params.email;
       const data = req.body;
       const filter = { email: email };
-      if (!data.role) {
-        const updatedDoc = {
-          $set: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            image: data.image,
-          },
-        };
-      }
       const updatedDoc = {
         $set: {
           role: data.role,
@@ -124,12 +122,26 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
-    app.post("/api/v1/users/reviews", async (req, res) => {
-      const user = req.body;
-      const result = await reviewCollection.insertOne(user);
+    app.put("/api/v1/users/updateProfile/:email", async (req, res) => {
+      const email = req.params.email;
+      const data = req.body;
+      const filter = { email: email };
+      const options = { upsert: true }
+     
+        const updatedDoc = {
+          $set: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            image: data.image,
+          },
+        };
+    
+   
+
+      const result = await userCollection.updateOne(filter, updatedDoc,options);
       res.send(result);
     });
-
 
 
     // user booking related api
@@ -142,7 +154,7 @@ async function run() {
 
     app.get("/api/v1/users/admin/bookings", async (req, res) => {
       const result = await bookingCollection.find().toArray();
-      console.log(result);
+      // console.log(result);
       res.send(result);
     }); ///---------------
     app.get("/api/v1/users/bookings/:email", async (req, res) => {
@@ -156,7 +168,7 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await bookingCollection.findOne(query);
-      console.log(result);
+      //console.log(result);
       res.send(result);
     });
     app.delete("/api/v1/users/bookings/:id", async (req, res) => {
@@ -208,7 +220,7 @@ async function run() {
         role: "admin"
        };
       const result = await userCollection.findOne(query);
-      console.log(result);
+      //console.log(result);
       if (result) {
         res.send({admin:true});
         
@@ -244,7 +256,15 @@ async function run() {
       //console.log(result);
       res.send(result);
     });
-    // app.get("/api/v1/deliveryMen/deliveryList/:email", async (req, res) => {});
+    app.get("/api/v1/users/deliveryMen/deliveryList", async (req, res) => {
+      const data = req.body;
+      const query = { 
+        // email: data.email,
+        deliveryMenID: data._id
+       };
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
     // app.get(
     //   "/api/v1/deliveryMen/delivery/reviews/:email",
     //   async (req, res) => {}
@@ -252,7 +272,22 @@ async function run() {
     // app.delete("/api/v1/deliveryMen/deliveryList/:id", async (req, res) => {
     //   const id = req.params.id;
     //   const query = { _id: new ObjectId(id) };
+    //   const result = await bookingCollection.deleteOne(query);
+    //   res.send(result);
     // });
+    //working
+    app.patch("/api/v1/deliveryMen/deliveryList/cancel/deliver/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: data.status,
+        },
+      };
+      const result = await bookingCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
