@@ -171,6 +171,23 @@ async function run() {
       //console.log(result);
       res.send(result);
     });
+    //working
+    app.patch("/api/v1/users/bookings/assign/deliveryMen/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id:new ObjectId(id) };
+      // const options = {upsert:true };
+      const updatedDoc = {
+        $set: {
+          status: "On The Way",
+          deliveryMenID: data.selectedDeliveryMen,
+          approximateDeliveryDate:data.approximateDeliveryDate
+        },
+      };
+      const result = await bookingCollection.updateOne(filter, updatedDoc);
+      console.log(id,result)
+      res.send(result);
+    });
     app.delete("/api/v1/users/bookings/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -178,18 +195,7 @@ async function run() {
       // console.log(result)
       res.send(result);
     });
-    app.patch("/api/v1/users/bookings/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const updatedDoc = {
-        $set: {
-          status: "On The Way",
-          deliveryMenID: id,
-        },
-      };
-      const result = await bookingCollection.updateOne(filter, updatedDoc);
-      res.send(result);
-    });
+    
     app.patch("/api/v1/users/updateBooking/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
@@ -230,6 +236,12 @@ async function run() {
       }
       // res.send(result);
     });
+app.get('/api/v1/admin/users/collection', async (req, res) => {
+  const query = { role: "user" };
+  const result = await userCollection.find(query).toArray();
+  //console.log(result);
+  res.send(result);
+})
    
 
     // DeliveryMen related api
