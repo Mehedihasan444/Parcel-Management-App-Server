@@ -106,6 +106,7 @@ async function run() {
     });
     app.post("/api/v1/users/reviews", async (req, res) => {
       const user = req.body;
+      console.log(user)
       const result = await reviewCollection.insertOne(user);
       res.send(result);
     });
@@ -267,7 +268,6 @@ app.get('/api/v1/admin/users/collection', async (req, res) => {
       //console.log(result);
       res.send(result);
     });
-     //working
     app.get("/api/v1/users/deliveryMen/deliveryList/:id", async (req, res) => {
       const id = req.params.id;
       // console.log(id)
@@ -276,12 +276,6 @@ app.get('/api/v1/admin/users/collection', async (req, res) => {
       // console.log(result)
       res.send(result);
     });
-       // app.delete("/api/v1/deliveryMen/deliveryList/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   const result = await bookingCollection.deleteOne(query);
-    //   res.send(result);
-    // });
     app.get("/api/v1/deliveryMen/delivery/count/:id",async (req, res) => {
         const id = req.params.id;
         const query = {
@@ -305,6 +299,15 @@ app.get('/api/v1/admin/users/collection', async (req, res) => {
       const result = await bookingCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
+    //working
+    app.get("/api/v1/delivery/reviews/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { deliveryMenID: id };
+      const result = await reviewCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
