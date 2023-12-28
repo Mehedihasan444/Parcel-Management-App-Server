@@ -299,14 +299,41 @@ app.get('/api/v1/admin/users/collection', async (req, res) => {
       const result = await bookingCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
-    //working
     app.get("/api/v1/delivery/reviews/:id", async (req, res) => {
       const id = req.params.id;
       const query = { deliveryMenID: id };
       const result = await reviewCollection.find(query).toArray();
       res.send(result);
     });
-
+     //working
+app.patch("/api/v1/deliveryMen/reviews/average/:id",async (req, res) => {
+  const id = req.params.id;
+  const data = req.body;
+  const filter = { _id: new ObjectId(id),
+  role:'deliveryMen' 
+  };
+  const updatedDoc = {
+    $set: {
+      avgRating: data.rating,
+    },
+  };
+  const result = await userCollection.updateOne(filter, updatedDoc);
+  res.send(result);
+})
+app.patch("/api/v1/deliveryMen/parcel/delivered/:id",async (req, res) => {
+  const id = req.params.id;
+  const data = req.body;
+  const filter = { _id: new ObjectId(id),
+  role:'deliveryMen' 
+  };
+  const updatedDoc = {
+    $set: {
+      parcelDelivered: data.parcelDelivered,
+    },
+  };
+  const result = await userCollection.updateOne(filter, updatedDoc);
+  res.send(result);
+})
 
 
     // Send a ping to confirm a successful connection
