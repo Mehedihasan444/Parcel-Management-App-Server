@@ -171,7 +171,6 @@ async function run() {
       //console.log(result);
       res.send(result);
     });
-    //working
     app.patch("/api/v1/users/bookings/assign/deliveryMen/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
@@ -268,26 +267,32 @@ app.get('/api/v1/admin/users/collection', async (req, res) => {
       //console.log(result);
       res.send(result);
     });
-    app.get("/api/v1/users/deliveryMen/deliveryList", async (req, res) => {
-      const data = req.body;
-      const query = { 
-        // email: data.email,
-        deliveryMenID: data._id
-       };
+     //working
+    app.get("/api/v1/users/deliveryMen/deliveryList/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id)
+      const query = {  deliveryMenID:id,status:'On The Way' };
       const result = await bookingCollection.find(query).toArray();
+      // console.log(result)
       res.send(result);
     });
-    // app.get(
-    //   "/api/v1/deliveryMen/delivery/reviews/:email",
-    //   async (req, res) => {}
-    // );
-    // app.delete("/api/v1/deliveryMen/deliveryList/:id", async (req, res) => {
+       // app.delete("/api/v1/deliveryMen/deliveryList/:id", async (req, res) => {
     //   const id = req.params.id;
     //   const query = { _id: new ObjectId(id) };
     //   const result = await bookingCollection.deleteOne(query);
     //   res.send(result);
     // });
-    //working
+    app.get("/api/v1/deliveryMen/delivery/count/:id",async (req, res) => {
+        const id = req.params.id;
+        const query = {
+          deliveryMenID: id,
+        status:'delivered'
+        };
+        const result = await bookingCollection.find(query).toArray();
+        // console.log(result)
+        res.send(result);
+      }
+    );
     app.patch("/api/v1/deliveryMen/deliveryList/cancel/deliver/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
