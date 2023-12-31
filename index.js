@@ -31,53 +31,52 @@ async function run() {
     await client.connect();
 
     const userCollection = client.db("parcelManagementDB").collection("users");
-    const bookingCollection = client.db("parcelManagementDB").collection("bookings");
-    const reviewCollection = client.db("parcelManagementDB").collection("reviews");
-    const paymentCollection = client.db("parcelManagementDB").collection("payments");
-
-
-
+    const bookingCollection = client
+      .db("parcelManagementDB")
+      .collection("bookings");
+    const reviewCollection = client
+      .db("parcelManagementDB")
+      .collection("reviews");
+    const paymentCollection = client
+      .db("parcelManagementDB")
+      .collection("payments");
 
     // jwt related api
-    app.post('/api/v1/jwt', async (req, res) => {
+    app.post("/api/v1/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
       res.send({ token });
-    })
+    });
 
-    // middlewares 
+    // middlewares
     const verifyToken = (req, res, next) => {
       // console.log('inside verify token', req.headers.authorization);
       if (!req.headers.authorization) {
-        return res.status(401).send({ message: 'unauthorized access' });
+        return res.status(401).send({ message: "unauthorized access" });
       }
-      const token = req.headers.authorization.split(' ')[1];
+      const token = req.headers.authorization.split(" ")[1];
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
-          return res.status(401).send({ message: 'unauthorized access' })
+          return res.status(401).send({ message: "unauthorized access" });
         }
         req.decoded = decoded;
         next();
-      })
-    }
+      });
+    };
 
     // use verify admin after verifyToken
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
-      const isAdmin = user?.role === 'admin';
+      const isAdmin = user?.role === "admin";
       if (!isAdmin) {
-        return res.status(403).send({ message: 'forbidden access' });
+        return res.status(403).send({ message: "forbidden access" });
       }
       next();
-    }
-
-
-
-
-
-    
+    };
 
     // user related api
     app.post("/api/v1/users", async (req, res) => {
@@ -93,11 +92,8 @@ async function run() {
       res.send(result);
     });
     app.get("/api/v1/users/admin", async (req, res) => {
-     
-         const result = await userCollection.find().toArray();
+      const result = await userCollection.find().toArray();
       res.send(result);
-  
-     
     });
     app.get("/api/v1/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -107,7 +103,7 @@ async function run() {
     });
     app.post("/api/v1/users/reviews", async (req, res) => {
       const user = req.body;
-      console.log(user)
+      console.log(user);
       const result = await reviewCollection.insertOne(user);
       res.send(result);
     });
@@ -124,27 +120,37 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
+    app.get('/api/v1/users', async (req, res) => {
+      const page = Number(req.query.page);
+      const skip = (page - 1) * 5;
+      // console.log(category,sortField,sortOrder,page,limit,skip);
+      const result = await userCollection.find().skip(skip).limit(5).toArray();
+      const count = await userCollection.estimatedDocumentCount();
+      console.log({ result, count });
+      res.send({ result, count })
+  })
     app.put("/api/v1/users/updateProfile/:email", async (req, res) => {
       const email = req.params.email;
       const data = req.body;
       const filter = { email: email };
-      const options = { upsert: true }
-     
-        const updatedDoc = {
-          $set: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            image: data.image,
-          },
-        };
-    
-   
+      const options = { upsert: true };
 
-      const result = await userCollection.updateOne(filter, updatedDoc,options);
+      const updatedDoc = {
+        $set: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          image: data.image,
+        },
+      };
+
+      const result = await userCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
       res.send(result);
     });
-
 
     // user booking related api
     app.post("/api/v1/users/bookings", async (req, res) => {
@@ -162,6 +168,10 @@ async function run() {
     app.get("/api/v1/users/bookings/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
+      const Status = req.query.status;
+      if (Status) {
+         query.status = Status 
+      } 
       const result = await bookingCollection.find(query).toArray();
       // console.log(result)
       res.send(result);
@@ -173,22 +183,25 @@ async function run() {
       //console.log(result);
       res.send(result);
     });
-    app.patch("/api/v1/users/bookings/assign/deliveryMen/:id", async (req, res) => {
-      const id = req.params.id;
-      const data = req.body;
-      const filter = { _id:new ObjectId(id) };
-      // const options = {upsert:true };
-      const updatedDoc = {
-        $set: {
-          status: "On The Way",
-          deliveryMenID: data.selectedDeliveryMen,
-          approximateDeliveryDate:data.approximateDeliveryDate
-        },
-      };
-      const result = await bookingCollection.updateOne(filter, updatedDoc);
-      console.log(id,result)
-      res.send(result);
-    });
+    app.patch(
+      "/api/v1/users/bookings/assign/deliveryMen/:id",
+      async (req, res) => {
+        const id = req.params.id;
+        const data = req.body;
+        const filter = { _id: new ObjectId(id) };
+        // const options = {upsert:true };
+        const updatedDoc = {
+          $set: {
+            status: "On The Way",
+            deliveryMenID: data.selectedDeliveryMen,
+            approximateDeliveryDate: data.approximateDeliveryDate,
+          },
+        };
+        const result = await bookingCollection.updateOne(filter, updatedDoc);
+        console.log(id, result);
+        res.send(result);
+      }
+    );
     app.delete("/api/v1/users/bookings/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -196,7 +209,7 @@ async function run() {
       // console.log(result)
       res.send(result);
     });
-    
+
     app.patch("/api/v1/users/updateBooking/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
@@ -222,44 +235,39 @@ async function run() {
     // admin related api
     app.get("/api/v1/admin/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { 
+      const query = {
         email: email,
-        role: "admin"
-       };
+        role: "admin",
+      };
       const result = await userCollection.findOne(query);
       //console.log(result);
       if (result) {
-        res.send({admin:true});
-        
-      }
-      else {
-        res.send({admin:false});
+        res.send({ admin: true });
+      } else {
+        res.send({ admin: false });
       }
       // res.send(result);
     });
-app.get('/api/v1/admin/users/collection', async (req, res) => {
-  const query = { role: "user" };
-  const result = await userCollection.find(query).toArray();
-  //console.log(result);
-  res.send(result);
-})
-   
+    app.get("/api/v1/admin/users/collection", async (req, res) => {
+      const query = { role: "user" };
+      const result = await userCollection.find(query).toArray();
+      //console.log(result);
+      res.send(result);
+    });
 
     // DeliveryMen related api
     app.get("/api/v1/deliveryMen/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { 
+      const query = {
         email: email,
-        role: "deliveryMen"
-       };
+        role: "deliveryMen",
+      };
       const result = await userCollection.findOne(query);
       //console.log(result);
       if (result) {
-        res.send({deliveryMen:true});
-        
-      }
-      else {
-        res.send({deliveryMen:false});
+        res.send({ deliveryMen: true });
+      } else {
+        res.send({ deliveryMen: false });
       }
       // res.send(result);
     });
@@ -272,70 +280,67 @@ app.get('/api/v1/admin/users/collection', async (req, res) => {
     app.get("/api/v1/users/deliveryMen/deliveryList/:id", async (req, res) => {
       const id = req.params.id;
       // console.log(id)
-      const query = {  deliveryMenID:id,status:'On The Way' };
+      const query = { deliveryMenID: id, status: "On The Way" };
       const result = await bookingCollection.find(query).toArray();
       // console.log(result)
       res.send(result);
     });
-    app.get("/api/v1/deliveryMen/delivery/count/:id",async (req, res) => {
+    app.get("/api/v1/deliveryMen/delivery/count/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        deliveryMenID: id,
+        status: "delivered",
+      };
+      const result = await bookingCollection.find(query).toArray();
+      // console.log(result)
+      res.send(result);
+    });
+    app.patch(
+      "/api/v1/deliveryMen/deliveryList/cancel/deliver/:id",
+      async (req, res) => {
         const id = req.params.id;
-        const query = {
-          deliveryMenID: id,
-        status:'delivered'
+        const data = req.body;
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            status: data.status,
+          },
         };
-        const result = await bookingCollection.find(query).toArray();
-        // console.log(result)
+        const result = await bookingCollection.updateOne(filter, updatedDoc);
         res.send(result);
       }
     );
-    app.patch("/api/v1/deliveryMen/deliveryList/cancel/deliver/:id", async (req, res) => {
-      const id = req.params.id;
-      const data = req.body;
-      const filter = { _id: new ObjectId(id) };
-      const updatedDoc = {
-        $set: {
-          status: data.status,
-        },
-      };
-      const result = await bookingCollection.updateOne(filter, updatedDoc);
-      res.send(result);
-    })
     app.get("/api/v1/delivery/reviews/:id", async (req, res) => {
       const id = req.params.id;
       const query = { deliveryMenID: id };
       const result = await reviewCollection.find(query).toArray();
       res.send(result);
     });
-     //working
-app.patch("/api/v1/deliveryMen/reviews/average/:id",async (req, res) => {
-  const id = req.params.id;
-  const data = req.body;
-  const filter = { _id: new ObjectId(id),
-  role:'deliveryMen' 
-  };
-  const updatedDoc = {
-    $set: {
-      avgRating: data.rating,
-    },
-  };
-  const result = await userCollection.updateOne(filter, updatedDoc);
-  res.send(result);
-})
-app.patch("/api/v1/deliveryMen/parcel/delivered/:id",async (req, res) => {
-  const id = req.params.id;
-  const data = req.body;
-  const filter = { _id: new ObjectId(id),
-  role:'deliveryMen' 
-  };
-  const updatedDoc = {
-    $set: {
-      parcelDelivered: data.parcelDelivered,
-    },
-  };
-  const result = await userCollection.updateOne(filter, updatedDoc);
-  res.send(result);
-})
-
+    //working
+    app.patch("/api/v1/deliveryMen/reviews/average/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id), role: "deliveryMen" };
+      const updatedDoc = {
+        $set: {
+          avgRating: data.rating,
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+    app.patch("/api/v1/deliveryMen/parcel/delivered/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id), role: "deliveryMen" };
+      const updatedDoc = {
+        $set: {
+          parcelDelivered: data.parcelDelivered,
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
